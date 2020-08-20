@@ -1,5 +1,82 @@
 from definitions import *
 
+import re
+
+
+class Rectangle(Deserialize):
+    def __new__(self, typeTarget, length, width):
+        return ArrayOf(ArrayOf(typeTarget, width), length)
+
+
+class Square(Deserialize):
+    def __new__(self, typeTarget, length):
+        return Rectangle(typeTarget, length, length)
+
+class ChessBoard(Square(u8, 8)):
+    pass
+
+class SSN(String):
+    @classmethod
+    def validate(cls, ssn):
+        if not re.match("\d{3}-\d{2}-\d{4}", ssn):
+            raise Exception("not a social security number!")
+
+class Name(String):
+    @classmethod
+    def validate(cls, name):
+        if len(name) > 256:
+            raise Exception("this may be culturaly insenstive, but that name is just too long for our database to handle")
+
+class Person(Deserialize):
+
+    name = Name
+    age = u8 # After-all no is over 255 and no is under 0, right?
+    ssn = SSN.optional() # This is an internationl competition, so not everyone is going to have a US SSN.
+
+
+class Player(Person):
+
+    emergencyContacts = ArrayOf(Person, length=2)
+
+Player.deserialize("""
+{
+    "name": "Alice",
+    "age": 34,
+    "emergencyContacts": [{
+        "name": "Bob",
+        "age": 38,
+        "ssn": "123-45-6789"
+    }, {
+        "name": "Eve",
+        "age": 36,
+        "ssn": "123-45-6788"
+    }]
+}
+""")
+
+class Game(Deserialize):
+
+    playerOne = Player
+    playerTwo = Player
+    board = ChessBoard
+
+print(Square(u8, 3).deserialize('[[1, 2, 3], [3, 4,3], [5, 6,3]]'))
+print(ChessBoard.deserialize("""[
+    [1, 2, 3, 4, 5, 6, 7, 8], 
+    [1, 2, 3, 4, 5, 6, 7, 8], 
+    [1, 2, 3, 4, 5, 6, 7, 8], 
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [1, 2, 3, 4, 5, 6, 7, 8], 
+    [1, 2, 3, 4, 5, 6, 7, 8], 
+    [1, 2, 3, 4, 5, 6, 7, 8], 
+    [1, 2, 3, 4, 5, 6, 7, 8]
+]"""))
+# print(LimitedLength.deserialize('[1,2,3,4,5]'))
+
+
+# print(UnsignedByte.deserialize("1"))
+# print(UnsignedByte.deserialize("255"))
+
 class Column(Deserialize):
 
     type = String # this would be an enum but you get the point.
@@ -29,7 +106,6 @@ class Database(Deserialize):
 
     schemas = ArrayOf(Schema)
     fp_groups = ArrayOf(ArrayOf(Integer))
-
 
 database = '''
 {
@@ -115,9 +191,8 @@ database = '''
 
 '''
 
-try:
-    print(Database.deserialize(database).schemas[1].procedures[0].code)
-except Exception as e:
-    print(e)
-
+# try:
+#     print(Database.deserialize(database).schemas[1].procedures[0].code)
+# except Exception as e:
+#     print(e)
 
