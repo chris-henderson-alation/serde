@@ -3,18 +3,10 @@ import inspect
 
 class Deserialize(object):
 
-    required = True
-
-    # ALL of the black magic is held in this one focal point
-    # so that it is easy to verify. All consumers should just
-    # be plain old Python.
 
     @classmethod
-    def option(cls, required=True):
-        suffix = "Required" if required else "NotRequired"
-        return type("{}{}".format(cls.__name__, suffix), (cls, ), {
-            "required": required
-            })
+    def optional(cls):
+        return type("Optional" + cls.__name__, (cls, Optional), {})
 
     @classmethod
     def deserialize(cls, raw):
@@ -38,11 +30,14 @@ class Deserialize(object):
                 continue
             if k in raw:
                 obj.__setattr__(k,  v.deserialize(raw[k]))
-            elif not v.required:
+            elif issubclass(v, Optional):
                 obj.__setattr__(k,  None)
             else:
                 raise Exception("expected member {}".format(k))
         return obj
+
+class Optional():
+    pass
 
 class Primitive(Deserialize):
 
@@ -61,6 +56,10 @@ class Integer(Primitive):
 
 class String(Primitive):
     Type = str
+
+    @classmethod
+    def typeCheck(cls, terminal):
+        return isinstance(terminal, unicode) or Primitive.typeCheck(cls, terminal)
 
 class Float(Primitive):
     Type = float

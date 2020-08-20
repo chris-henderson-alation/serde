@@ -4,25 +4,26 @@ class Column(Deserialize):
 
     type = String # this would be an enum but you get the point.
     name = String
-    comments = String.option(required=False)
+    comments = String.optional()
 
 class Table(Deserialize):
 
     name = String
     columns = ArrayOf(Column)
-    comments = String.option(required=False)
+    comments = String.optional()
 
 class StoredProcedure(Deserialize):
 
     code = String
-    comments = String.option(required=False)    
+    comments = String.optional()
 
 class Schema(Deserialize):
 
     name = String
     tables = ArrayOf(Table)
-    procedures = ArrayOf(StoredProcedure).option(required=False)
-    comments = String.option(required=False)
+    procedures = ArrayOf(StoredProcedure).optional()
+    # comments = String.option(required=False)
+    comments = String.optional()
 
 class Database(Deserialize):
 
@@ -114,4 +115,9 @@ database = '''
 
 '''
 
-print(Database.deserialize(database).schemas[1].procedures[0].code)
+try:
+    print(Database.deserialize(database).schemas[1].procedures[0].code)
+except Exception as e:
+    print(e)
+
+
