@@ -15,6 +15,11 @@ class Deserialize(Validate):
         return type("Optional" + cls.__name__, (cls, Optional), {})
 
     @classmethod
+    def default(cls, default):
+        cls.deserialize(default)
+        return type("Default" + cls.__name__, (cls, Default), {"defaultValue": default})
+
+    @classmethod
     def deserialize(cls, raw):
         if isinstance(raw, str):
             raw = json.loads(raw)
@@ -28,6 +33,7 @@ class Deserialize(Validate):
             raw = [cls.Type.deserialize(v) for v in raw]
         # cls.validate(raw)
         for klazz in [klazz for klazz in cls.mro() if issubclass(klazz, Validate)]:
+            # print(cls.__name__, klazz.__name__)
             klazz.validate(raw)
         # for klazz in [c for c in cls.mro()[::-1] if c != cls]:
         #     super(cls, klazz).validate(raw)
@@ -43,7 +49,9 @@ class Deserialize(Validate):
                 continue
             if k in raw:
                 obj.__setattr__(k,  v.deserialize(raw[k]))
-            elif not cls.required():
+            elif v.hasDefault():
+                obj.__setattr__(k, v.defaultValue)
+            elif not v.required():
                 obj.__setattr__(k,  None)
             else:
                 raise Exception("expected member {}".format(k))
@@ -54,7 +62,15 @@ class Deserialize(Validate):
     def required(cls):
         return not issubclass(cls, Optional)
 
-class Optional():
+    @classmethod
+    def hasDefault(cls):
+        return issubclass(cls, Default)
+
+
+class Optional(object):
+    pass
+
+class Default(object):
     pass
 
 class Primitive(Deserialize):
@@ -179,6 +195,3 @@ class SizedArray(ArrayOf):
             (Deserialize, ArrayOf), 
             {"Type": target}
         )
-
-
-arr = ArrayOf(u8, length=2).deserialize("[1, 2]")
