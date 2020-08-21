@@ -31,13 +31,8 @@ class Deserialize(Validate):
             if not issubclass(cls, ArrayOf):
                 raise Exception("expected type {}, got an array".format(cls.__name__))
             raw = [cls.Type.deserialize(v) for v in raw]
-        # cls.validate(raw)
         for klazz in [klazz for klazz in cls.mro() if issubclass(klazz, Validate)]:
-            # print(cls.__name__, klazz.__name__)
             klazz.validate(raw)
-        # for klazz in [c for c in cls.mro()[::-1] if c != cls]:
-        #     super(cls, klazz).validate(raw)
-        # cls.validate(raw)
         return raw
         
 
@@ -186,12 +181,3 @@ class ArrayOf(object):
                 if len(arr) != length:
                     raise Exception("wrong size")
         return validator
-
-class SizedArray(ArrayOf):
-    
-    def __new__(self, target):
-        return type(
-            "ArrayOf<{}>".format(target.__name__ ), 
-            (Deserialize, ArrayOf), 
-            {"Type": target}
-        )

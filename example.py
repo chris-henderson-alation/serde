@@ -7,7 +7,7 @@ import re
 import enum
 
 
-class ChessPiece(u8):
+class ChessPiece(Deserialize):
     
     WhiteKing    = 1
     WhiteQueen   = 2
@@ -23,31 +23,49 @@ class ChessPiece(u8):
     BlackPawn    = 12
     Empty        = 13
 
-    asString = {
-        WhiteKing  :  '♔',
-        WhiteQueen :  '♕',
-        WhiteRook  :  '♖',
-        WhiteBishop:  '♗',
-        WhiteKnight:  '♘',
-        WhitePawn  :  '♙',
-        BlackKing  :  '♚',
-        BlackQueen :  '♛',
-        BlackRook  :  '♜',
-        BlackBishop:  '♝',
-        BlackKnight:  '♞',
-        BlackPawn  :  '♟',
-        Empty      :  ' ',
+    fromString = {
+        '♔': WhiteKing  ,
+        '♕': WhiteQueen ,
+        '♖': WhiteRook  ,
+        '♗': WhiteBishop,
+        '♘': WhiteKnight,
+        '♙': WhitePawn  ,
+        '♚': BlackKing  ,
+        '♛': BlackQueen ,
+        '♜': BlackRook  ,
+        '♝': BlackBishop,
+        '♞': BlackKnight,
+        '♟': BlackPawn  ,
+        ' ': Empty      ,
     }
+    pieces = set([
+        WhiteKing, 
+        WhiteQueen, 
+        WhiteRook, 
+        WhiteBishop,
+        WhiteKnight, 
+        WhitePawn, 
+        BlackKing, 
+        BlackQueen, 
+        BlackRook, 
+        BlackBishop, 
+        BlackKnight, 
+        BlackPawn, 
+        Empty
+    ])
 
     @classmethod
     def deserialize(cls, piece):
-        piece = super(u8, cls).deserialize(piece)
-        return cls.asString.get(piece, str(piece))
+        return super(ChessPiece, cls).deserialize(cls.fromString.get(piece, str(piece)))
 
     @classmethod
     def validate(cls, piece):
-        if piece not in cls.asString:
+        if piece not in cls.pieces:
             raise Exception("{} is not a chess piece!".format(piece))
+
+
+
+print(ChessPiece.deserialize("♜"))
 
 class Rectangle(Deserialize):
     def __new__(self, typeTarget, length, width):
@@ -61,6 +79,18 @@ class Square(Deserialize):
 
 class ChessBoard(Square(ChessPiece, 8)):
     pass
+
+ChessBoard.deserialize("""[
+        ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
+        ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        ['♙', '♙', '♙', '♙', '♙', '♙', '♙', '♙'], 
+        ['♖', '♘', '♗', '♕', '♔', '♗', '♘', '♖']
+    ]
+""")
 
 class SSN(String):
     @classmethod
@@ -149,10 +179,10 @@ game = """
 }
 """
 
-try:
-    Game.deserialize(game)
-except Exception as e:
-    print(e)
+# try:
+#     Game.deserialize(game)
+# except Exception as e:
+#     print(e)
 
 # Player.deserialize("""
 # {
